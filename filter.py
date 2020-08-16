@@ -1,9 +1,14 @@
 import os
 import sys
 from GUI import *
-from validate_email import validate_email
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import *
+try:
+    from validate_email import validate_email
+except:
+    os.system('pip install validate_email')
+    os.execl(sys.executable, 'filter.py', *sys.argv)
+
 
 print('-------------------------------Starting the filtering of the mailing data--------------------------------------')
 print()
@@ -157,7 +162,7 @@ if __name__ == '__main__':
         file_as_arg = sys.argv[1]
         execute_filter_action(file_as_arg)
     except:
-        root = Root('HMZ Filter')
+        root = Root('Max Filter By HMZ')
         root.center(400, 650)
         image = ImageTk.PhotoImage(Image.open('pictures/title.png'))
         title = BLImagedTitle(root, image, 'Max Filter')
