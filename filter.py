@@ -1,14 +1,17 @@
 import os
 import sys
-from GUI import *
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import *
+from tkinter import ttk
+
 try:
+    from GUI import *
     from validate_email import validate_email
 except:
+    os.system('pip install Pillow')
     os.system('pip install validate_email')
+    # Restart
     os.execl(sys.executable, 'filter.py', *sys.argv)
-
 
 print('-------------------------------Starting the filtering of the mailing data--------------------------------------')
 print()
@@ -18,6 +21,8 @@ if not os.path.isdir('filter_result'):
     os.mkdir('filter_result')
 
 result_path_saver = ''
+tmp_data_saver = []
+result_saver = []
 keep = True
 
 with open('tmp') as resume_file:
@@ -105,6 +110,7 @@ def execute_filter_action(arg, start=0):
         sort_orders = sorted(stats.items(), key=lambda x: x[1], reverse=True)
         # Data by brand
         for i in sort_orders:
+            result_saver.append(i[0] + ':' + str(i[1]))
             stats_file.write('|->' + i[0] + '=' + str(i[1]) + '\n')
         # Duplicating stats
         stats_file.write('-------------------------Duplicated-----------------------------\n')
@@ -119,8 +125,7 @@ def execute_filter_action(arg, start=0):
                 nve.write(e + '\n')
 
     print('|-> Finished :)')
-    with open('tmp', 'w+') as tmp_file:
-        tmp_file.write('0')
+
     os.system('notepad ' + path + '/stats/stats.txt')
     statsButton.config(state=NORMAL)
     toggleButton.config(state=DISABLED)
@@ -128,12 +133,14 @@ def execute_filter_action(arg, start=0):
 
 
 def accept_file(event):
+    global tmp_data_saver
     Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
     filename = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
     if filename[filename.rindex('.') + 1:] != 'txt':
         showerror('Loading error', 'Chosen file should be a text file = file.txt')
     else:
         data = resume.split('\n')
+        tmp_data_saver = data
         start = 0
         for d in data:
             v = d.split('=')
@@ -149,7 +156,73 @@ def quit(event):
 
 
 def result(event):
-    os.system('notepad ' + result_path_saver + '/stats/stats.txt')
+    window = Toplevel(root)
+    container = Frame(window)
+    container2 = Frame(window)
+    canvas = Canvas(container)
+    canvas2 = Canvas(container2)
+    scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+    scrollbar2 = ttk.Scrollbar(container2, orient="vertical", command=canvas2.yview)
+    scrollable_frame = ttk.Frame(canvas)
+    scrollable_frame2 = ttk.Frame(canvas2)
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+    scrollable_frame2.bind(
+        "<Configure>",
+        lambda e: canvas2.configure(
+            scrollregion=canvas2.bbox("all")
+        )
+    )
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas2.create_window((0, 0), window=scrollable_frame2, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas2.configure(yscrollcommand=scrollbar2.set)
+
+    def helper(val):
+        return lambda event: fill_result(event, val)
+
+    def fill_result(event, chosen):
+        collector = ''
+        for line in open(result_path_saver + '/result/' + chosen + '.txt'):
+            collector += line + '\n'
+        l.config(text=collector)
+        b.config(state=NORMAL, text=chosen + '.txt')
+
+    def openFile(event):
+        file = b['text']
+        os.system('notepad ' + result_path_saver + '/result/' + file)
+
+    def showstats(event):
+        os.system('notepad ' + result_path_saver + '/stats/stats.txt')
+
+    for i in result_saver:
+        b = BLbutton(scrollable_frame, i)
+        b.config(width=30)
+        b.bind('<Button-1>', helper(i.split(':')[0]))
+        b.pack(pady=5)
+
+    b0 = BLbutton(scrollable_frame2, 'Open Stats')
+    b0.bind('<Button-1>', showstats)
+    b0.pack(pady=5)
+    b = BLbutton(scrollable_frame2, 'Open File')
+    b.config(state=DISABLED)
+    b.bind('<Button-1>', openFile)
+    b.pack(pady=5)
+    l = Label(scrollable_frame2, text='RESULT SHOULD APPEAR HERE')
+    l.pack()
+
+    container.pack(side="left", fill="y")
+    container2.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+    canvas2.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="right", fill="y")
+    window.mainloop()
+
 
 
 def toggle(event):
