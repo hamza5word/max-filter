@@ -3,6 +3,7 @@ import sys
 from GUI import *
 from validate_email import validate_email
 from tkinter.filedialog import askopenfilename
+from tkinter.messagebox import *
 
 print('-------------------------------Starting the filtering of the mailing data--------------------------------------')
 print()
@@ -11,9 +12,13 @@ print()
 if not os.path.isdir('filter_result'):
     os.mkdir('filter_result')
 
+result_path_saver = ''
 
 # Function that starts the job
 def execute_filter_action(arg):
+    global result_path_saver
+    file = arg
+    arg = arg[arg.rindex('/') + 1:]
     # ------------------------------------------------------------------------------------------------------------------
     # Initialising global working vars
     email_brands = []
@@ -33,8 +38,10 @@ def execute_filter_action(arg):
         os.mkdir(path + '/result')
     # ------------------------------------------------------------------------------------------------------------------
     # Looping inside data file
-    for d in open(arg):
+    for d in open(file):
         print('|-> attempt filtering n°:' + str(counter))
+        console.configure(text=counter)
+        root.update()
         info = d.split(':')
         email = info[0]
         part = email[email.index('@'):]
@@ -59,6 +66,7 @@ def execute_filter_action(arg):
             stats[brand] = 0
             email_brands.append(brand)
         # Writing data to file
+        result_path_saver = path
         with open(path + '/result/' + brand + '.txt', 'a') as emails:
             emails.write(email + '\n')
         # Saving data to vars
@@ -88,19 +96,29 @@ def execute_filter_action(arg):
         stats_file.write('|-> All = ' + str(len(non_valid_emails)) + '\n')
         with open(path + '/stats/invalid_emails.txt', 'a') as nve:
             for e in non_valid_emails:
-                nve.write('|->' + e + '\n')
+                nve.write(e + '\n')
 
     print('|-> Finished :)')
-
-
-chosen_file = ''
+    os.system('notepad ' + path + '/stats/stats.txt')
+    statsButton.config(state=NORMAL)
+    root.update()
 
 
 def accept_file(event):
     Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
     filename = askopenfilename()  # show an "Open" dialog box and return the path to the selected file
-    print(filename[filename.rindex('/')+1:])
+    if filename[filename.rindex('.') + 1:] != 'txt':
+        showerror('Loading error', 'Chosen file should be a text file = file.txt')
+    else:
+        execute_filter_action(filename)
 
+
+def quit(event):
+    root.destroy()
+    sys.exit(0)
+
+def result(event):
+    os.system('notepad ' + result_path_saver + '/stats/stats.txt')
 
 if __name__ == '__main__':
     try:
@@ -108,15 +126,22 @@ if __name__ == '__main__':
         execute_filter_action(file_as_arg)
     except:
         root = Root('Max Filter')
-        root.center(400, 450)
+        root.center(400, 600)
         image = ImageTk.PhotoImage(Image.open('pictures/title.png'))
         title = BLImagedTitle(root, image, 'Max Filter')
+        console = Label(bg='black', fg='green', height=2, width=80, text='Standing By', font=('Courier', 20))
         button = BLbutton(root, 'Choose Data File')
-        sep1 = Label()
-        sep2 = Label()
+        button.config(width=30)
+        statsButton = BLbutton(root, 'Show Result')
+        statsButton.config(width=30, state=DISABLED)
+        exitButton = BLbutton(root, 'Exit')
+        exitButton.config(width=30)
         title.pack(side=TOP)
-        sep1.pack()
-        button.pack()
-        sep2.pack()
+        console.pack()
+        button.pack(pady=20)
+        statsButton.pack()
+        exitButton.pack(pady=20)
         button.bind('<Button-1>', accept_file)
+        statsButton.bind('<Button-1>', result)
+        exitButton.bind('<Button-1>', quit)
         root.mainloop()
