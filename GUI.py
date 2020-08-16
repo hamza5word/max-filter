@@ -1,5 +1,4 @@
 from tkinter import *
-from PIL import ImageTk, Image
 from csv import *
 import tkinter.messagebox as gui
 MAX_ADD_THEMES = 3
