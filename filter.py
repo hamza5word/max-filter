@@ -13,9 +13,15 @@ if not os.path.isdir('filter_result'):
     os.mkdir('filter_result')
 
 result_path_saver = ''
+keep = True
+
+with open('tmp') as resume_file:
+    resume = resume_file.read()
+
 
 # Function that starts the job
-def execute_filter_action(arg):
+def execute_filter_action(arg, start=0):
+    toggleButton.config(state=NORMAL)
     global result_path_saver
     file = arg
     arg = arg[arg.rindex('/') + 1:]
@@ -39,6 +45,13 @@ def execute_filter_action(arg):
     # ------------------------------------------------------------------------------------------------------------------
     # Looping inside data file
     for d in open(file):
+        while not keep:
+            console.configure(text='Paused')
+            root.update()
+        if counter < start:
+            counter += 1
+            console.configure(text='Resuming ' + str(counter))
+            continue
         print('|-> attempt filtering n°:' + str(counter))
         console.configure(text=counter)
         root.update()
@@ -71,6 +84,8 @@ def execute_filter_action(arg):
             emails.write(email + '\n')
         # Saving data to vars
         counter += 1
+        with open('tmp', 'w+') as tmp_file:
+            tmp_file.write(arg[0:arg.index('.')] + '=' + str(counter))
         stats[brand] += 1
     # ------------------------------------------------------------------------------------------------------------------
     # Creating stats folder
@@ -99,8 +114,11 @@ def execute_filter_action(arg):
                 nve.write(e + '\n')
 
     print('|-> Finished :)')
+    with open('tmp', 'w+') as tmp_file:
+        tmp_file.write('0')
     os.system('notepad ' + path + '/stats/stats.txt')
     statsButton.config(state=NORMAL)
+    toggleButton.config(state=DISABLED)
     root.update()
 
 
@@ -110,23 +128,37 @@ def accept_file(event):
     if filename[filename.rindex('.') + 1:] != 'txt':
         showerror('Loading error', 'Chosen file should be a text file = file.txt')
     else:
-        execute_filter_action(filename)
+        data = resume.split('\n')
+        start = 0
+        for d in data:
+            v = d.split('=')
+            tv = filename[filename.rindex('/') + 1:filename.rindex('.')]
+            if v[0] == tv:
+                start = int(v[1])
+        execute_filter_action(filename, start)
 
 
 def quit(event):
     root.destroy()
     sys.exit(0)
 
+
 def result(event):
     os.system('notepad ' + result_path_saver + '/stats/stats.txt')
+
+
+def toggle(event):
+    global keep
+    keep = not keep
+
 
 if __name__ == '__main__':
     try:
         file_as_arg = sys.argv[1]
         execute_filter_action(file_as_arg)
     except:
-        root = Root('Max Filter')
-        root.center(400, 600)
+        root = Root('HMZ Filter')
+        root.center(400, 650)
         image = ImageTk.PhotoImage(Image.open('pictures/title.png'))
         title = BLImagedTitle(root, image, 'Max Filter')
         console = Label(bg='black', fg='green', height=2, width=80, text='Standing By', font=('Courier', 20))
@@ -134,14 +166,18 @@ if __name__ == '__main__':
         button.config(width=30)
         statsButton = BLbutton(root, 'Show Result')
         statsButton.config(width=30, state=DISABLED)
+        toggleButton = BLbutton(root, 'Toggle (Pause/Run)')
+        toggleButton.config(width=30, state=DISABLED)
         exitButton = BLbutton(root, 'Exit')
         exitButton.config(width=30)
         title.pack(side=TOP)
         console.pack()
         button.pack(pady=20)
         statsButton.pack()
-        exitButton.pack(pady=20)
+        toggleButton.pack(pady=20)
+        exitButton.pack()
         button.bind('<Button-1>', accept_file)
         statsButton.bind('<Button-1>', result)
+        toggleButton.bind('<Button-1>', toggle)
         exitButton.bind('<Button-1>', quit)
         root.mainloop()
