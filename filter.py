@@ -157,6 +157,8 @@ def quit(event):
 
 def result(event):
     window = Toplevel(root)
+    focus_set(window)
+    escape_exit(window)
     container = Frame(window)
     container2 = Frame(window)
     canvas = Canvas(container)
@@ -236,6 +238,7 @@ if __name__ == '__main__':
         execute_filter_action(file_as_arg)
     except:
         root = Root('Max Filter By HMZ')
+        escape_exit(root)
         root.center(400, 650)
         image = ImageTk.PhotoImage(Image.open('pictures/title.png'))
         title = BLImagedTitle(root, image, 'Max Filter')
