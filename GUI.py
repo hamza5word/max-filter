@@ -45,7 +45,7 @@ try:
                 chosed += c
         CT = THEME[chosed]
 except:
-    CT = THEME['WHITEMAROON']
+    CT = THEME['BLACKMAROON']
 
 F = CT['Foregrounds']
 B = CT['Backgrounds']
@@ -70,16 +70,16 @@ class Root(Tk):
 class BLbutton(Button):
     def __init__(self, master=None, text=""):
         super().__init__(master)
-        self.configure(text=text, font='calibri', padx=20, bd=0, bg=B[2], fg=F[0], activebackground=A[0]
+        self.configure(text=text, font='calibri', padx=20, bd=0, bg=B[1], fg=F[0], activebackground=A[0]
                        , cursor='hand2')
         self.bind('<Enter>', self.on_enter)
         self.bind('<Leave>', self.on_leave)
 
     def on_enter(self, event):
-        self.configure(bg=B[1], fg=F[1])
+        self.configure(bg=B[4], fg=F[1])
 
     def on_leave(self, event):
-        self.configure(bg=B[2], fg=F[0])
+        self.configure(bg=B[1], fg=F[0])
 
 class BLbuttons(Frame):
     def __init__(self, master=None, *buttons):
